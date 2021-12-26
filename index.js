@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,8 +23,10 @@ async function run() {
         await client.connect();
         const database = client.db("Bicycle_Store");
         const cycleCollection = database.collection("Products");
+        const reviewCollection = database.collection("Reviews");
+        const purchaseCollection = database.collection("Purchase");
 
-        // add API
+        // add products
         app.post('/products', async (req, res) => {
             const product = req.body;
             // console.log(product);
@@ -31,7 +34,7 @@ async function run() {
             res.json(products);
         })
 
-        // get API
+        // get products
         app.get('/products', async (req, res) => {
             const cursor = cycleCollection.find({});
             const products = await cursor.toArray();
@@ -39,16 +42,94 @@ async function run() {
         })
 
         // get API with Limit
-        app.get('/products/query', async (req, res) => {
-            const limit = req.query.limit;
-            // console.log(limit);
+        app.get('/products/limit', async (req, res) => {
+            const limit = req.query.number;
+            console.log(limit);
             const int = parseInt(limit);
-            // console.log(int)
+            console.log(int)
             const cursor = cycleCollection.find({});
             const products = await cursor.limit(int).toArray();
             res.json(products);
-
         })
+
+        // get product by id
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await cycleCollection.findOne(query);
+            res.json(result)
+        })
+
+        // delete product by id
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await cycleCollection.deleteOne(query);
+            res.json(result)
+        })
+
+
+        // add a review
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            console.log('hit the post')
+            console.log(result);
+            res.json(result)
+        })
+
+        // get a review
+        app.get('/reviews', async (req, res) => {
+            const cursor = reviewCollection.find({});
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        })
+
+        // add a purchase
+        app.post('/purchase', async (req, res) => {
+            const product = req.body;
+            // console.log(product);
+            const purchase = await purchaseCollection.insertOne(product);
+            res.json(purchase);
+        })
+
+        // get a purchase
+        app.get('/purchase', async (req, res) => {
+            const cursor = purchaseCollection.find({});
+            const purchase = await cursor.toArray();
+            res.json(purchase);
+        })
+
+        // get a purchase by email
+        app.get('/purchase/email', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const cursor = purchaseCollection.find(query);
+            // console.log(product);
+            const purchase = await cursor.toArray();
+            res.json(purchase);
+        })
+
+
+        // get product by id
+        app.get('/purchase/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.findOne(query);
+            res.json(result)
+        })
+        // get product by id
+        app.delete('/purchase/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.deleteOne(query);
+            res.json(result)
+        })
+
+
+
+
+
     }
     finally {
         // await client.close();
