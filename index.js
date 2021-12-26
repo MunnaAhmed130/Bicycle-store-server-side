@@ -25,6 +25,7 @@ async function run() {
         const cycleCollection = database.collection("Products");
         const reviewCollection = database.collection("Reviews");
         const purchaseCollection = database.collection("Purchase");
+        const usersCollection = database.collection("Users");
 
         // add products
         app.post('/products', async (req, res) => {
@@ -44,9 +45,9 @@ async function run() {
         // get API with Limit
         app.get('/products/limit', async (req, res) => {
             const limit = req.query.number;
-            console.log(limit);
+            // console.log(limit);
             const int = parseInt(limit);
-            console.log(int)
+            // console.log(int)
             const cursor = cycleCollection.find({});
             const products = await cursor.limit(int).toArray();
             res.json(products);
@@ -73,8 +74,8 @@ async function run() {
         app.post('/reviews', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
-            console.log('hit the post')
-            console.log(result);
+            // console.log('hit the post')
+            // console.log(result);
             res.json(result)
         })
 
@@ -118,12 +119,52 @@ async function run() {
             const result = await purchaseCollection.findOne(query);
             res.json(result)
         })
+
         // get product by id
         app.delete('/purchase/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.deleteOne(query);
             res.json(result)
+        })
+
+        //add new users
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            console.log('hit the post')
+            console.log(result);
+            res.json(result)
+        })
+
+        // update new users
+        app.get('/users', async (req, res) => {
+            const cursor = usersCollection.find({});
+            const result = await cursor.toArray();
+            console.log(result);
+            res.json(result)
+        })
+
+        // add a admin
+        app.put('/users/admin', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const updateDoc = { $set: { role: 'admin' } };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            console.log(result);
+            res.json(result)
+        })
+
+        // check if user is admin
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === "admin") {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin })
         })
 
 
