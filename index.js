@@ -112,7 +112,7 @@ async function run() {
         })
 
 
-        // get product by id
+        // get purchase by id
         app.get('/purchase/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -120,7 +120,7 @@ async function run() {
             res.json(result)
         })
 
-        // get product by id
+        // delete purchase by id
         app.delete('/purchase/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -137,10 +137,21 @@ async function run() {
             res.json(result)
         })
 
-        // update new users
+        // get users
         app.get('/users', async (req, res) => {
             const cursor = usersCollection.find({});
             const result = await cursor.toArray();
+            console.log(result);
+            res.json(result)
+        })
+
+        // update new users
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
             console.log(result);
             res.json(result)
         })
