@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const ObjectId = require("mongodb").ObjectId;
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -18,17 +17,17 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 //client
 const client = new MongoClient(uri, {
   // useNewUrlParser: true,
-  // useUnifiedTopology: true,
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
+  useUnifiedTopology: true,
+  // serverApi: {
+  //   version: ServerApiVersion.v1,
+  //   strict: true,
+  //   deprecationErrors: true,
+  // },
 });
 
 async function run() {
   try {
-    client.connect();
+    // client.connect();
     const database = client.db("Bicycle_Store");
     const cycleCollection = database.collection("Products");
     const reviewCollection = database.collection("Reviews");
@@ -45,21 +44,19 @@ async function run() {
 
     // get products
     app.get("/products", async (req, res) => {
-      if (req.query.rating) {
-        const filter = req.query.rating;
-
-        const cursor = await cycleCollection
-          .find({
-            rating: { $gt: filter, $lte: 5 },
-          })
-          .toArray();
-        // console.log(cursor);
-        res.json(cursor);
-      } else {
-        const cursor = cycleCollection.find({});
-        const products = await cursor.toArray();
-        res.send(products);
-      }
+      // if (req.query.rating) {
+      //   const filter = req.query.rating;
+      //   const cursor = await cycleCollection
+      //     .find({
+      //       rating: filter,
+      //     })
+      //     .toArray();
+      //   res.json(cursor);
+      // } else {
+      const cursor = cycleCollection.find({});
+      const products = await cursor.toArray();
+      res.send(products);
+      // }
     });
 
     // get API with Limit
@@ -100,17 +97,25 @@ async function run() {
 
     // get a review
     app.get("/reviews", async (req, res) => {
-      const cursor = reviewCollection.find({});
-      const reviews = await cursor.toArray();
-      res.send(reviews);
+      if (req.query.limit) {
+        const limit = Number(req.query.limit);
+        const cursor = reviewCollection.find({});
+        const reviews = await cursor.limit(limit).toArray();
+        res.json(reviews);
+      } else {
+        const cursor = reviewCollection.find({});
+        const reviews = await cursor.toArray();
+        res.send(reviews);
+      }
+      // const cursor = reviewCollection.find({});
+      // const reviews = await cursor.toArray();
+      // res.send(reviews);
     });
 
     // get API with Limit
     app.get("/reviews/limit", async (req, res) => {
       const limit = req.query.number;
-      // console.log(limit);
       const int = parseInt(limit);
-      // console.log(int)
       const cursor = reviewCollection.find({});
       const reviews = await cursor.limit(int).toArray();
       res.json(reviews);
@@ -215,7 +220,7 @@ async function run() {
   }
 }
 
-run().catch(console.dir);
+run().catch((err) => console.log(err));
 
 app.get("/", (req, res) => {
   res.send("Welcome to Bicycle store server");
